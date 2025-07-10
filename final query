@@ -1,0 +1,26 @@
+/* Write your T-SQL query statement below */
+with countcte as (select user_id, count(rating) as countofreview from movierating 
+group by user_id),
+maxcount as (
+    select * from countcte
+    where countofreview in (select max(countofreview) from countcte)
+), findmaxreviewer as (
+    select top 1 u.name as results from maxcount m 
+    left join users u 
+    on m.user_id = u.user_id 
+    order by u.name),
+avgratingfeb as (
+    select movie_id, AVG(rating*1.00) as avgrating from movierating 
+    where  YEAR(created_at) ='2020' and Month(created_at)='02'
+    group by movie_id
+),maxratefeb as (
+    select top 1 u.title as results from avgratingfeb m 
+    left join movies u 
+    on m.movie_id = u.movie_id
+    where avgrating in (select max(avgrating) from avgratingfeb) 
+    order by u.title
+)
+
+select results from findmaxreviewer
+union all
+select results from maxratefeb
